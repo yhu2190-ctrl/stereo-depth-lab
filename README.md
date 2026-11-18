@@ -90,6 +90,26 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 打开 `points.ply`，文件头应有 `element vertex 2`，末尾两行应为 `0.4 0.1 4` 和 `-0.1 -0.05 2`。坐标以米为单位，按左相机的 X 向右、Y 向下、Z 向前导出。终端会报告导出的点数，可用默认的 CSV 输出查看逐行筛选原因。若无符合条件的点，仍会输出文件头，顶点数为零。PLY 模式会暂存有效点以预先写入顶点数，默认 CSV 模式逐行输出。
 
+### Synthetic scene · 合成点云演示
+
+下载 [wireframe.ply](examples/wireframe.ply)，用支持 PLY 的点云查看器打开，旋转视角可以看到长方体的前后两面和连接它们的四条棱。PLY 只保存顶点，查看时用点显示。线框沿棱每隔 0.125 m 采样一次，共 84 个点，角点各计一次。左相机坐标中，X 从 −0.5 m 到 +0.5 m，Y 从 −0.375 m 到 +0.375 m，前后两面分别在 Z = 2 m 和 Z = 3 m。
+
+从仓库根目录运行以下命令可复现。`stereo_scene` 用焦距 768 px、主点 (320, 240) px、基线 0.125 m 把真值投影成左右像素。`stereo_batch` 读取这些匹配，用相同参数重建点云。
+
+```powershell
+# Windows with a Visual Studio generator
+.\build\Release\stereo_scene.exe | Set-Content -Encoding ascii build\scene-matches.csv
+.\build\Release\stereo_batch.exe 768 768 320 240 0.125 build\scene-matches.csv --max-vertical-mismatch 0 --format ply | Set-Content -Encoding ascii build\scene.ply
+```
+
+```sh
+# Linux or macOS with a single-config generator
+./build/stereo_scene > build/scene-matches.csv
+./build/stereo_batch 768 768 320 240 0.125 build/scene-matches.csv --max-vertical-mismatch 0 --format ply > build/scene.ply
+```
+
+终端应显示 `stereo_batch: exported 84 of 84 rows`。近端角点 `(-0.5, -0.375, 2)` 对应左图 `(128, 96)`、右图 `(80, 96)`，视差是 48 px，代入公式得到 `768 × 0.125 / 48 = 2 m`。测试核对这个角点和远端对角点的像素，并用 `wireframe.ply` 中的真值逐点核对输出。此演示使用未取整的理想投影和已知对应点，各条棱上的采样点都参与重建。
+
 ## Pixel noise experiment · 像素误差实验
 
 ```powershell

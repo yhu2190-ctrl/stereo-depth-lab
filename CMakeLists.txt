@@ -17,6 +17,9 @@ target_link_libraries(stereo_batch PRIVATE stereo_depth)
 add_executable(stereo_noise experiments/stereo_noise.cpp)
 target_link_libraries(stereo_noise PRIVATE stereo_depth)
 
+add_executable(stereo_scene experiments/stereo_scene.cpp)
+target_link_libraries(stereo_scene PRIVATE stereo_depth)
+
 include(CTest)
 if(BUILD_TESTING)
     add_executable(stereo_tests tests/stereo_tests.cpp)
@@ -41,4 +44,9 @@ if(BUILD_TESTING)
         "-DBATCH_EXE=$<TARGET_FILE:stereo_batch>"
         "-DINPUT_CSV=${CMAKE_CURRENT_SOURCE_DIR}/examples/matches.csv"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/batch_ply.cmake")
+    add_test(NAME synthetic_scene COMMAND ${CMAKE_COMMAND}
+        "-DSCENE_EXE=$<TARGET_FILE:stereo_scene>"
+        "-DBATCH_EXE=$<TARGET_FILE:stereo_batch>"
+        "-DREFERENCE_PLY=${CMAKE_CURRENT_SOURCE_DIR}/examples/wireframe.ply"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/synthetic_scene.cmake")
 endif()
