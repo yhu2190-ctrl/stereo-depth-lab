@@ -74,6 +74,22 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 可在文件名后加 `--max-vertical-mismatch 1`，拒绝左右纵坐标相差超过 1 px 的匹配。样例第五条相差 2 px，启用该阈值后会标记为 `vertical_mismatch`，保留视差和纵向差值，三维坐标留空。阈值等于差值时保留该行。默认接受任意有限的纵向差值，并把差值写入输出。
 
+### Export a point cloud · 导出点云
+
+加 `--format ply` 可把有效的三维点保存为 ASCII PLY。示例同时启用 1 px 纵向差值阈值：
+
+```powershell
+# Windows with a Visual Studio generator
+.\build\Release\stereo_batch.exe 800 800 320 240 0.12 examples\matches.csv --max-vertical-mismatch 1 --format ply | Set-Content -Encoding ascii points.ply
+```
+
+```sh
+# Linux or macOS with a single-config generator
+./build/stereo_batch 800 800 320 240 0.12 examples/matches.csv --max-vertical-mismatch 1 --format ply > points.ply
+```
+
+打开 `points.ply`，文件头应有 `element vertex 2`，末尾两行应为 `0.4 0.1 4` 和 `-0.1 -0.05 2`。坐标以米为单位，按左相机的 X 向右、Y 向下、Z 向前导出。终端会报告导出的点数，可用默认的 CSV 输出查看逐行筛选原因。若无符合条件的点，仍会输出文件头，顶点数为零。PLY 模式会暂存有效点以预先写入顶点数，默认 CSV 模式逐行输出。
+
 ## Pixel noise experiment · 像素误差实验
 
 ```powershell

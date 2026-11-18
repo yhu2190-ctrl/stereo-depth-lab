@@ -37,4 +37,8 @@ if(BUILD_TESTING)
         "-DBATCH_EXE=$<TARGET_FILE:stereo_batch>"
         "-DINPUT_CSV=${CMAKE_CURRENT_SOURCE_DIR}/examples/matches.csv"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/batch_csv.cmake")
+    add_test(NAME batch_ply COMMAND ${CMAKE_COMMAND}
+        "-DBATCH_EXE=$<TARGET_FILE:stereo_batch>"
+        "-DINPUT_CSV=${CMAKE_CURRENT_SOURCE_DIR}/examples/matches.csv"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/batch_ply.cmake")
 endif()
