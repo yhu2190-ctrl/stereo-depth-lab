@@ -11,6 +11,9 @@ target_include_directories(stereo_depth PUBLIC include)
 add_executable(stereo_point src/main.cpp)
 target_link_libraries(stereo_point PRIVATE stereo_depth)
 
+add_executable(stereo_noise experiments/stereo_noise.cpp)
+target_link_libraries(stereo_noise PRIVATE stereo_depth)
+
 include(CTest)
 if(BUILD_TESTING)
     add_executable(stereo_tests tests/stereo_tests.cpp)
@@ -22,4 +25,8 @@ if(BUILD_TESTING)
         PASS_REGULAR_EXPRESSION "x_m=0[.]4 y_m=0[.]1 z_m=4")
     add_test(NAME rejects_invalid_argument COMMAND stereo_point 800oops 800 320 240 0.12 400 260 376 260)
     set_tests_properties(rejects_invalid_argument PROPERTIES WILL_FAIL TRUE)
+
+    add_test(NAME pixel_noise_experiment COMMAND stereo_noise)
+    set_tests_properties(pixel_noise_experiment PROPERTIES
+        PASS_REGULAR_EXPRESSION "12,8,-1,7,2,13[.]71428571,1[.]714285714,1[.]5,ok")
 endif()

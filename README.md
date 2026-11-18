@@ -45,9 +45,31 @@ d       = u_left − u_right = fx × B / Z
 
 现有测试用已知三维点生成左右像素，再检查三角化能否恢复原坐标。工具会拒绝非正视差。很小的正视差仍可计算，但深度对像素误差更敏感。
 
+## Pixel noise experiment · 像素误差实验
+
+```powershell
+# Windows with a Visual Studio generator
+.\build\Release\stereo_noise.exe | Set-Content -Encoding ascii stereo-noise.csv
+```
+
+```sh
+# Linux or macOS with a single-config generator
+./build/stereo_noise > stereo-noise.csv
+```
+
+固定焦距 800 px、基线 0.12 m，把已知深度的三维点投影到两台理想相机。给左右图的水平坐标分别加上 −1、0 或 +1 px，枚举全部 9 种组合。深度只取决于左右偏移之差，所以 CSV 按 5 种视差偏移汇总，`case_count` 是该行对应的组合数。若视差变为零或负数，该行记录 `invalid_disparity`，估计深度和误差留空。
+
+| 真实深度 | 真实视差 | 视差偏小 1 px 时的估计深度 | 深度误差 |
+| --- | --- | --- | --- |
+| 4 m | 24 px | 4.174 m | +0.174 m |
+| 12 m | 8 px | 13.714 m | +1.714 m |
+| 24 m | 4 px | 32.000 m | +8.000 m |
+
+在这个例子中，12 m 处和 4 m 处都少了 1 px 视差，前者的深度误差约是后者的 9.9 倍。用 `Z = fx × B / d` 在真实视差 `d` 处求导，可得到小扰动下的误差近似 `ΔZ ≈ −Z × Δd / d`。CSV 同时记录实际误差和这个近似值，方便比较视差偏移接近真实视差时，两者会差多远。
+
 ## Scope · 当前范围
 
-v0.1 接受一对已匹配的像素坐标。相机标定、图像校正和特征匹配由上游完成。下一步计划做可复现的像素噪声实验，测量不同深度的误差，再考虑批量读取真实匹配点。
+`stereo_point` 接受一对已匹配的像素坐标。相机标定、图像校正和特征匹配由上游完成。噪声实验使用已知真值的合成点，报告的是给定相机和像素扰动下的深度误差。
 
 See [Hartley and Sturm, *Triangulation*](https://doi.org/10.1006/cviu.1997.0547) for triangulation with general camera poses.
 
