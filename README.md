@@ -132,6 +132,28 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 在这个例子中，12 m 处和 4 m 处都少了 1 px 视差，前者的深度误差约是后者的 9.9 倍。用 `Z = fx × B / d` 在真实视差 `d` 处求导，可得到小扰动下的误差近似 `ΔZ ≈ −Z × Δd / d`。CSV 同时记录实际误差和这个近似值，方便比较视差偏移接近真实视差时，两者会差多远。
 
+### Depth error plot · 深度误差图
+
+![视差偏差 ±1 px 时，重建误差及其线性近似随真实深度变化](examples/stereo-noise.svg)
+
+图从上面生成的 `stereo-noise.csv` 读取视差偏差为 −1 px 和 +1 px 的记录。横轴是真实深度（米、以 2 为底的对数刻度），纵轴是估计深度减真值（米）。圆点是 CSV 中的重建误差，虚线是同一批数据的线性近似，连线用于对比趋势。只有观测视差大于零才有深度估计，所以 96 m 处的 −1 px 曲线没有数据点。
+
+48 m 处真实视差为 2 px。少 1 px 时，估计深度是 96 m，误差为 +48 m，是线性近似 +24 m 的两倍。多 1 px 时，估计深度是 32 m，误差为 −16 m。同样大小的像素偏差会产生不同大小的深度误差。图展示理想相机上的确定性扰动，左右像素的不同偏移组合可以产生同一个视差偏差。实际图像还受标定、校正和匹配误差影响。
+
+要重新生成 SVG，先用上面的命令生成 CSV，再用 Python 3.10 或更新版本运行下面两条命令。Matplotlib 只用于画图，C++ 构建和测试仍只需要 CMake 和 C++17 编译器。
+
+```powershell
+# Windows
+py -3 -m pip install "matplotlib>=3.8"
+py -3 experiments\plot_noise.py stereo-noise.csv build\stereo-noise.svg
+```
+
+```sh
+# Linux or macOS
+python3 -m pip install "matplotlib>=3.8"
+python3 experiments/plot_noise.py stereo-noise.csv build/stereo-noise.svg
+```
+
 ## Scope · 当前范围
 
 `stereo_point` 和 `stereo_batch` 使用已匹配的像素坐标。相机标定、图像校正和特征匹配由上游完成。噪声实验使用已知真值的合成点，报告的是给定相机和像素扰动下的深度误差。
