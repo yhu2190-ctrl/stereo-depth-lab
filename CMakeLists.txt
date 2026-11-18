@@ -11,6 +11,9 @@ target_include_directories(stereo_depth PUBLIC include)
 add_executable(stereo_point src/main.cpp)
 target_link_libraries(stereo_point PRIVATE stereo_depth)
 
+add_executable(stereo_batch src/batch.cpp)
+target_link_libraries(stereo_batch PRIVATE stereo_depth)
+
 add_executable(stereo_noise experiments/stereo_noise.cpp)
 target_link_libraries(stereo_noise PRIVATE stereo_depth)
 
@@ -29,4 +32,9 @@ if(BUILD_TESTING)
     add_test(NAME pixel_noise_experiment COMMAND stereo_noise)
     set_tests_properties(pixel_noise_experiment PROPERTIES
         PASS_REGULAR_EXPRESSION "12,8,-1,7,2,13[.]71428571,1[.]714285714,1[.]5,ok")
+
+    add_test(NAME batch_csv COMMAND ${CMAKE_COMMAND}
+        "-DBATCH_EXE=$<TARGET_FILE:stereo_batch>"
+        "-DINPUT_CSV=${CMAKE_CURRENT_SOURCE_DIR}/examples/matches.csv"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/batch_csv.cmake")
 endif()

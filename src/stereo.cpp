@@ -5,13 +5,17 @@
 
 namespace stereo_depth {
 
-Reconstruction triangulate(const Rig& rig, Pixel left, Pixel right) {
+void validate_rig(const Rig& rig) {
     if (!std::isfinite(rig.fx) || !std::isfinite(rig.fy) ||
         !std::isfinite(rig.cx) || !std::isfinite(rig.cy) ||
         !std::isfinite(rig.baseline_m) ||
         rig.fx <= 0.0 || rig.fy <= 0.0 || rig.baseline_m <= 0.0) {
         throw std::invalid_argument("focal lengths and baseline must be positive, and all rig values must be finite");
     }
+}
+
+Reconstruction triangulate(const Rig& rig, Pixel left, Pixel right) {
+    validate_rig(rig);
     if (!std::isfinite(left.u) || !std::isfinite(left.v) ||
         !std::isfinite(right.u) || !std::isfinite(right.v)) {
         throw std::invalid_argument("pixel coordinates must be finite");

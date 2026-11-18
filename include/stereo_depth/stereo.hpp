@@ -29,6 +29,9 @@ struct Reconstruction {
     double vertical_mismatch_px;
 };
 
+// Throws invalid_argument if the camera model is invalid.
+void validate_rig(const Rig& rig);
+
 // Throws invalid_argument for invalid calibration or observations and
 // range_error when the result falls outside the representable numeric range.
 Reconstruction triangulate(const Rig& rig, Pixel left, Pixel right);

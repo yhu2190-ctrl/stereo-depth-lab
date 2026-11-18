@@ -45,6 +45,30 @@ d       = u_left − u_right = fx × B / Z
 
 现有测试用已知三维点生成左右像素，再检查三角化能否恢复原坐标。工具会拒绝非正视差。很小的正视差仍可计算，但深度对像素误差更敏感。
 
+## Batch reconstruction · 批量重建
+
+用 `stereo_batch` 批量读取已匹配的像素坐标。输入是 UTF-8 CSV，首行为 `u_left,v_left,u_right,v_right`，后面每行四个逗号分隔的数字，无引号。从仓库根目录运行：
+
+```powershell
+# Windows with a Visual Studio generator
+.\build\Release\stereo_batch.exe 800 800 320 240 0.12 examples\matches.csv
+```
+
+```sh
+# Linux or macOS with a single-config generator
+./build/stereo_batch 800 800 320 240 0.12 examples/matches.csv
+```
+
+```csv
+row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
+1,0.4,0.1,4,24,0,ok
+2,,,,,,invalid_disparity
+3,,,,,,malformed_row
+4,-0.1,-0.05,2,48,0,ok
+```
+
+输出中的 `row` 从第一条数据开始编号。样例里第一和第四条分别对应真值 `(0.4, 0.1, 4)` 和 `(-0.1, -0.05, 2)`。第二条视差为零，第三条有非法数字。程序会给每行记录状态，继续处理后续行。若相机参数、表头或文件读写失败，进程返回非零状态码。把输出重定向到文件即可保存为 CSV。
+
 ## Pixel noise experiment · 像素误差实验
 
 ```powershell
@@ -69,7 +93,7 @@ d       = u_left − u_right = fx × B / Z
 
 ## Scope · 当前范围
 
-`stereo_point` 接受一对已匹配的像素坐标。相机标定、图像校正和特征匹配由上游完成。噪声实验使用已知真值的合成点，报告的是给定相机和像素扰动下的深度误差。
+`stereo_point` 和 `stereo_batch` 使用已匹配的像素坐标。相机标定、图像校正和特征匹配由上游完成。噪声实验使用已知真值的合成点，报告的是给定相机和像素扰动下的深度误差。
 
 See [Hartley and Sturm, *Triangulation*](https://doi.org/10.1006/cviu.1997.0547) for triangulation with general camera poses.
 

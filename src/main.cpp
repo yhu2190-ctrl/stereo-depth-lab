@@ -1,23 +1,11 @@
-#include "stereo_depth/stereo.hpp"
+#include "cli_args.hpp"
 
 #include <exception>
 #include <iomanip>
 #include <iostream>
-#include <stdexcept>
-#include <string>
 #include <string_view>
 
 namespace {
-
-double parse_number(const char* argument) {
-    const std::string text(argument);
-    std::size_t consumed = 0;
-    const double value = std::stod(text, &consumed);
-    if (consumed != text.size()) {
-        throw std::invalid_argument("expected a number, got " + text);
-    }
-    return value;
-}
 
 void print_usage(std::ostream& stream) {
     stream << "Usage: stereo_point fx fy cx cy baseline_m u_left v_left u_right v_right\n";
@@ -36,11 +24,9 @@ int main(int argc, char** argv) {
     }
 
     try {
-        const stereo_depth::Rig rig{
-            parse_number(argv[1]), parse_number(argv[2]), parse_number(argv[3]),
-            parse_number(argv[4]), parse_number(argv[5])};
-        const stereo_depth::Pixel left{parse_number(argv[6]), parse_number(argv[7])};
-        const stereo_depth::Pixel right{parse_number(argv[8]), parse_number(argv[9])};
+        const auto rig = stereo_cli::parse_rig(argv + 1);
+        const stereo_depth::Pixel left{stereo_cli::parse_number(argv[6]), stereo_cli::parse_number(argv[7])};
+        const stereo_depth::Pixel right{stereo_cli::parse_number(argv[8]), stereo_cli::parse_number(argv[9])};
         const auto result = stereo_depth::triangulate(rig, left, right);
         const auto& point = result.point_m;
 
