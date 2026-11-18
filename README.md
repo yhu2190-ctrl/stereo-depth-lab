@@ -1,5 +1,7 @@
 # Stereo Depth Lab
 
+[![Build and test](https://github.com/yhu2190-ctrl/stereo-depth-lab/actions/workflows/build.yml/badge.svg)](https://github.com/yhu2190-ctrl/stereo-depth-lab/actions/workflows/build.yml)
+
 A dependency-free C++17 tool for reconstructing 3D points from matched pixels in a rectified stereo pair. It reports the reconstructed point, horizontal disparity, and vertical mismatch.
 
 一个用 C++17 写的双目三角化工具。给定已校正的左右图像中同一个点的像素坐标，以及相机内参和基线距离，计算该点在左相机坐标系下的三维位置。
