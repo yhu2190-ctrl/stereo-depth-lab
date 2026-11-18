@@ -8,13 +8,38 @@ A dependency-free C++17 tool for reconstructing 3D points from matched pixels in
 
 ## Build and run
 
-Install a C++17 compiler and CMake 3.20 or newer. On Windows, you can run these commands from a Visual Studio Developer PowerShell with CMake available.
+### 1. Get the source
+
+在终端克隆仓库。下面的命令都从 `stereo-depth-lab` 根目录运行。
+
+```sh
+git clone https://github.com/yhu2190-ctrl/stereo-depth-lab.git
+cd stereo-depth-lab
+```
+
+### 2. Configure, build, and test
+
+**Linux / macOS** 安装 C++17 编译器和 CMake 3.20 或更新版本，使用单配置生成器（如 Unix Makefiles 或 Ninja）。
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ctest --test-dir build -C Release --output-on-failure
 ```
+
+**Windows** 安装 Visual Studio 2022 或对应的 Build Tools，勾选「使用 C++ 的桌面开发」，使用 CMake 3.22 或更新版本。在 Visual Studio Developer PowerShell 中运行：
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022"
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+如果用 Visual Studio 2026，使用 CMake 4.2 或更新版本，并将 `-G` 后的名称改为 `Visual Studio 18 2026`。可用 `cmake --help` 查看当前版本支持的生成器。
+
+Windows 的 Visual Studio 生成器把 Release 程序放到 `build\Release`。Linux 和 macOS 的单配置生成器把程序放到 `build/`。切换生成器时使用新的构建目录，并相应调整下文路径。测试正常结束时应看到 `100% tests passed`。
+
+### 3. Reconstruct one point
 
 ```powershell
 # Windows with a Visual Studio generator
@@ -53,7 +78,7 @@ d       = u_left − u_right = fx × B / Z
 
 ```powershell
 # Windows with a Visual Studio generator
-.\build\Release\stereo_batch.exe 800 800 320 240 0.12 examples\matches.csv
+.\build\Release\stereo_batch.exe 800 800 320 240 0.12 examples/matches.csv
 ```
 
 ```sh
@@ -80,15 +105,15 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 ```powershell
 # Windows with a Visual Studio generator
-.\build\Release\stereo_batch.exe 800 800 320 240 0.12 examples\matches.csv --max-vertical-mismatch 1 --format ply | Set-Content -Encoding ascii points.ply
+.\build\Release\stereo_batch.exe 800 800 320 240 0.12 examples/matches.csv --max-vertical-mismatch 1 --format ply | Set-Content -Encoding ascii build/points.ply
 ```
 
 ```sh
 # Linux or macOS with a single-config generator
-./build/stereo_batch 800 800 320 240 0.12 examples/matches.csv --max-vertical-mismatch 1 --format ply > points.ply
+./build/stereo_batch 800 800 320 240 0.12 examples/matches.csv --max-vertical-mismatch 1 --format ply > build/points.ply
 ```
 
-打开 `points.ply`，文件头应有 `element vertex 2`，末尾两行应为 `0.4 0.1 4` 和 `-0.1 -0.05 2`。坐标以米为单位，按左相机的 X 向右、Y 向下、Z 向前导出。终端会报告导出的点数，可用默认的 CSV 输出查看逐行筛选原因。若无符合条件的点，仍会输出文件头，顶点数为零。PLY 模式会暂存有效点以预先写入顶点数，默认 CSV 模式逐行输出。
+打开 `build/points.ply`，文件头应有 `element vertex 2`，末尾两行应为 `0.4 0.1 4` 和 `-0.1 -0.05 2`。坐标以米为单位，按左相机的 X 向右、Y 向下、Z 向前导出。终端会报告导出的点数，可用默认的 CSV 输出查看逐行筛选原因。若无符合条件的点，仍会输出文件头，顶点数为零。PLY 模式会暂存有效点以预先写入顶点数，默认 CSV 模式逐行输出。
 
 ### Synthetic scene · 合成点云演示
 
@@ -98,8 +123,8 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 ```powershell
 # Windows with a Visual Studio generator
-.\build\Release\stereo_scene.exe | Set-Content -Encoding ascii build\scene-matches.csv
-.\build\Release\stereo_batch.exe 768 768 320 240 0.125 build\scene-matches.csv --max-vertical-mismatch 0 --format ply | Set-Content -Encoding ascii build\scene.ply
+.\build\Release\stereo_scene.exe | Set-Content -Encoding ascii build/scene-matches.csv
+.\build\Release\stereo_batch.exe 768 768 320 240 0.125 build/scene-matches.csv --max-vertical-mismatch 0 --format ply | Set-Content -Encoding ascii build/scene.ply
 ```
 
 ```sh
@@ -114,12 +139,12 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 ```powershell
 # Windows with a Visual Studio generator
-.\build\Release\stereo_noise.exe | Set-Content -Encoding ascii stereo-noise.csv
+.\build\Release\stereo_noise.exe | Set-Content -Encoding ascii build/stereo-noise.csv
 ```
 
 ```sh
 # Linux or macOS with a single-config generator
-./build/stereo_noise > stereo-noise.csv
+./build/stereo_noise > build/stereo-noise.csv
 ```
 
 固定焦距 800 px、基线 0.12 m，把已知深度的三维点投影到两台理想相机。给左右图的水平坐标分别加上 −1、0 或 +1 px，枚举全部 9 种组合。深度只取决于左右偏移之差，所以 CSV 按 5 种视差偏移汇总，`case_count` 是该行对应的组合数。若视差变为零或负数，该行记录 `invalid_disparity`，估计深度和误差留空。
@@ -136,27 +161,36 @@ row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status
 
 ![视差偏差 ±1 px 时，重建误差及其线性近似随真实深度变化](examples/stereo-noise.svg)
 
-图从上面生成的 `stereo-noise.csv` 读取视差偏差为 −1 px 和 +1 px 的记录。横轴是真实深度（米、以 2 为底的对数刻度），纵轴是估计深度减真值（米）。圆点是 CSV 中的重建误差，虚线是同一批数据的线性近似，连线用于对比趋势。只有观测视差大于零才有深度估计，所以 96 m 处的 −1 px 曲线没有数据点。
+图从上面生成的 `build/stereo-noise.csv` 读取视差偏差为 −1 px 和 +1 px 的记录。横轴是真实深度（米、以 2 为底的对数刻度），纵轴是估计深度减真值（米）。圆点是 CSV 中的重建误差，虚线是同一批数据的线性近似，连线用于对比趋势。只有观测视差大于零才有深度估计，所以 96 m 处的 −1 px 曲线没有数据点。
 
 48 m 处真实视差为 2 px。少 1 px 时，估计深度是 96 m，误差为 +48 m，是线性近似 +24 m 的两倍。多 1 px 时，估计深度是 32 m，误差为 −16 m。同样大小的像素偏差会产生不同大小的深度误差。图展示理想相机上的确定性扰动，左右像素的不同偏移组合可以产生同一个视差偏差。实际图像还受标定、校正和匹配误差影响。
 
-要重新生成 SVG，先用上面的命令生成 CSV，再用 Python 3.10 或更新版本运行下面两条命令。Matplotlib 只用于画图，C++ 构建和测试仍只需要 CMake 和 C++17 编译器。
+要重新生成 `build/stereo-noise.svg`，先用上面的命令生成 CSV，再用 Python 3.10 或更新版本创建虚拟环境。Windows 示例使用 Python 安装程序提供的 `py` 命令。Matplotlib 只用于画图，C++ 构建和测试仍只需要 CMake 和 C++17 编译器。
 
 ```powershell
 # Windows
-py -3 -m pip install "matplotlib>=3.8"
-py -3 experiments\plot_noise.py stereo-noise.csv build\stereo-noise.svg
+py -3 -m venv build/plot-env
+.\build\plot-env\Scripts\python.exe -m pip install "matplotlib>=3.8"
+.\build\plot-env\Scripts\python.exe experiments/plot_noise.py build/stereo-noise.csv build/stereo-noise.svg
 ```
 
 ```sh
 # Linux or macOS
-python3 -m pip install "matplotlib>=3.8"
-python3 experiments/plot_noise.py stereo-noise.csv build/stereo-noise.svg
+python3 -m venv build/plot-env
+./build/plot-env/bin/python -m pip install "matplotlib>=3.8"
+./build/plot-env/bin/python experiments/plot_noise.py build/stereo-noise.csv build/stereo-noise.svg
 ```
 
 ## Scope · 当前范围
 
 `stereo_point` 和 `stereo_batch` 使用已匹配的像素坐标。相机标定、图像校正和特征匹配由上游完成。噪声实验使用已知真值的合成点，报告的是给定相机和像素扰动下的深度误差。
+
+| 仓库示例 | 可复现结果 |
+| --- | --- |
+| 单点重建 | `(0.4, 0.1, 4)` m，视差 24 px |
+| 批量重建与筛选 | 5 行输入，启用 1 px 纵向阈值后导出 2 个有效顶点 |
+| 合成线框 | 84 个顶点，逐点与已知坐标核对 |
+| 像素噪声实验 | 7 个真实深度 × 5 种视差偏差，共 35 行数据，含 3 行非正视差记录 |
 
 See [Hartley and Sturm, *Triangulation*](https://doi.org/10.1006/cviu.1997.0547) for triangulation with general camera poses.
 
