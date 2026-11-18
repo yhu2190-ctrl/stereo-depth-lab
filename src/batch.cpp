@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <locale>
 #include <string_view>
 
@@ -41,7 +42,8 @@ std::array<double, 4> parse_pixels(std::string_view row) {
     return values;
 }
 
-void write_row(const stereo_depth::Rig& rig, std::size_t number, std::string_view row) {
+void write_row(const stereo_depth::Rig& rig, std::size_t number, std::string_view row,
+               double max_vertical_mismatch) {
     std::cout << number << ',';
     try {
         const auto values = parse_pixels(row);
@@ -52,6 +54,11 @@ void write_row(const stereo_depth::Rig& rig, std::size_t number, std::string_vie
             return;
         }
         const auto result = stereo_depth::triangulate(rig, left, right);
+        if (result.vertical_mismatch_px > max_vertical_mismatch) {
+            std::cout << ",,," << result.disparity_px << ',' << result.vertical_mismatch_px
+                      << ",vertical_mismatch\n";
+            return;
+        }
         std::cout << result.point_m.x << ',' << result.point_m.y << ',' << result.point_m.z
                   << ',' << result.disparity_px << ',' << result.vertical_mismatch_px << ",ok\n";
     } catch (const std::logic_error&) {
@@ -62,7 +69,7 @@ void write_row(const stereo_depth::Rig& rig, std::size_t number, std::string_vie
 }
 
 void print_usage(std::ostream& stream) {
-    stream << "Usage: stereo_batch fx fy cx cy baseline_m input.csv\n";
+    stream << "Usage: stereo_batch fx fy cx cy baseline_m input.csv [--max-vertical-mismatch PX]\n";
 }
 
 }  // namespace
@@ -72,7 +79,7 @@ int main(int argc, char** argv) {
         print_usage(std::cout);
         return 0;
     }
-    if (argc != 7) {
+    if (argc != 7 && (argc != 9 || std::string_view(argv[7]) != "--max-vertical-mismatch")) {
         print_usage(std::cerr);
         return 2;
     }
@@ -80,6 +87,13 @@ int main(int argc, char** argv) {
     try {
         const auto rig = stereo_cli::parse_rig(argv + 1);
         stereo_depth::validate_rig(rig);
+        double max_vertical_mismatch = std::numeric_limits<double>::infinity();
+        if (argc == 9) {
+            max_vertical_mismatch = stereo_cli::parse_number(argv[8]);
+            if (!std::isfinite(max_vertical_mismatch) || max_vertical_mismatch < 0.0) {
+                throw std::invalid_argument("maximum vertical mismatch must be finite and nonnegative");
+            }
+        }
         std::ifstream input(argv[6]);
         if (!input) {
             throw std::runtime_error("could not open input file");
@@ -103,7 +117,7 @@ int main(int argc, char** argv) {
                   << "row,x_m,y_m,z_m,disparity_px,vertical_mismatch_px,status\n";
         std::size_t number = 0;
         while (std::getline(input, line)) {
-            write_row(rig, ++number, line);
+            write_row(rig, ++number, line, max_vertical_mismatch);
         }
         if (!input.eof() || input.bad()) {
             throw std::runtime_error("could not finish reading input file");
